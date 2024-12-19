@@ -1,12 +1,14 @@
 
+-- pastebin get q7vNcwv3
+
 local Gridsize = 5
 local indexes = 9
-local treeDespawnTime = 480 -- longer time is more fuel efficient but less time efficient. 
+local treeDespawnTime = 480
 
 
 ------ start of function block. keep these together. they are a family
 
-fuelItems = {"stick", "coal", "charcoal", "lava_bucket", "birch_log"} -- items that turtle will use as fuel (in order?)
+fuelItems = {"stick", "coal", "charcoal", "lava_bucket", "birch_log"} -- items that turtle will use as fuel in order (higher priority first)
 
 X, Y, Z = 0, 0, 0 -- turtle location
 Direction = 0 -- direction turtle is facing
