@@ -1,32 +1,29 @@
 -- https://pastebin.com/q7vNcwv3
 -- pastebin get q7vNcwv3
 
-fuelItems = {"Coal", "Charcoal", "lava bucket", "oak log"} -- items that turtle will use as fuel
-valuables = {"diamond", "iron", "gold", "lapis"}
-nonValuables = {"dirt", "seeds"}
+fuelItems = {"coal", "charcoal", "lava_bucket", "oak_log"} -- items that turtle will use as fuel
+
 
 X, Y, Z = 0, 0, 0 -- turtle location
 Direction = 0 -- direction turtle is facing
 
 local depth, width, length = 100, 10, 10
 
-local function emptyInventory()
-  local lastLocation = {X, Y, Z}
-
-  moveToLocation(0, 0, 0)
-
-  -- empty to chest
-  -- refil fuel
-
-  moveToLocation(lastLocation[1], lastLocation[2], lastLocation[3]) -- go back to continue
-
+local function isInventoryFull()
+  for i = 1, 16, 1 do -- 4 by 4
+    if turtle.getItemCount(i) == 0 then
+      print("slot ", i, " is empty")
+      return 0
+    end
+  end
+  print("inventory is full")
+  return 1
 end
 
 local function tryDig()
   if isInventoryFull() then
-    emptyInventory()
+    print("inventory full")
   end
-
 
   turtle.dig()
 end
@@ -207,17 +204,6 @@ local function deay() -- delays a little bit of time by doing a 360
   end
 end
 
-local function isInventoryFull()
-  for i = 1, 16, 1 do -- 4 by 4
-    if turtle.getItemCount(i) == 0 then
-      print("slot " + i + " is empty")
-      return 0
-    end
-  end
-  print("inventory is full")
-  return 1
-end
-
 local function isFuel(slot)
   item = turtle.getItemDetail(slot)
 
@@ -242,9 +228,6 @@ end
 
 
 turtle.refuel()
-
-
-
 
 
 -- quarry code
