@@ -1,39 +1,27 @@
 
+local Gridsize = 5
+local indexes = 9
+local treeDespawnTime = 480 -- longer time is more fuel efficient but less time efficient. 
+
+
+------ start of function block. keep these together. they are a family
+
+fuelItems = {"stick", "coal", "charcoal", "lava_bucket", "birch_log"} -- items that turtle will use as fuel (in order?)
 
 X, Y, Z = 0, 0, 0 -- turtle location
 Direction = 0 -- direction turtle is facing
 
-local Gridsize = 5
-local indexes = 9
-local treeDespawnTime = 480
-
-local function tryTurnRight()
-  while true do -- not sure how this can fail but might as well
-    if turtle.turnRight() then 
-      Direction = Direction + 1
-    end
-    if Direction > 3 then
-      Direction = Direction - 4
-    end
-    return 1
-
-  end
-end
-
-local function face(direction)
-  while Direction ~= direction do
-    tryTurnRight()
-  end
-end
+-- inventory functions
 
 local function getItemName(slot)
   if turtle.getItemCount(slot) > 0 then
     return string.sub( turtle.getItemDetail(slot)["name"], string.find(turtle.getItemDetail(slot)["name"], ":") + 1)
+  else
+    return ""
   end
-  return nil
 end
 
-local function selectItem(item)
+local function selectItem(item) -- returns slot that item was in
   for i = 1, 16, 1 do
     if getItemName(i) == item then
       turtle.select(i)
@@ -41,6 +29,38 @@ local function selectItem(item)
     end
   end
   return 0
+end
+
+local function isInventoryFull()
+  for i = 1, 16, 1 do -- 4 by 4
+    if turtle.getItemCount(i) == 0 then
+      print("slot " + i + " is empty")
+      return 0
+    end
+  end
+  print("inventory is full")
+  return 1
+end
+
+local function isFuel(slot)
+  item = turtle.getItemDetail(slot)
+
+  for i = 1, #fuelItems, 1 do
+    if item == fuelItems[i] then
+      return 1
+    end
+  end
+  return 0
+
+end
+
+local function findFuel() -- finds fuel in inventory
+  for i = 1, 16, 1 do
+    if isFuel(i) then
+      return i
+    end
+  return 0
+  end
 end
 
 local function howManyStacks(item)
@@ -55,52 +75,40 @@ local function howManyStacks(item)
   return counter
 end
 
+-- movment functions
+
 local function dynamicRefuel() -- refuel with priority
   local material = "null"
 
-  if selectItem("stick") then
-    turtle.refuel()
-    material = "stick"
-  elseif selectItem("coal_block") then
-    turtle.refuel()
-    material = "coal_block"
-  elseif selectItem("birch_log") then
-    turtle.refuel()
-    material = "birch_log"
-  end
-
-  print("refueled using ", material)
-
-end
-
-local function turnAround()
-  tryTurnRight()
-  tryTurnRight()
-end
-
-local function tryUp()
-  while true do
-    if turtle.up() then
-      Z = Z + 1
+  for i = 1, #fuelItems, 1 do
+    if selectItem(fuelItems[i]) > 0 then
+      turtle.refuel()
+      print("refueled using ", fuelItems[i])
       return 1
     end
-    turtle.digUp()
-    dynamicRefuel()
+  end
+
+  print("can't refuel")
+  return 0
+
+end
+
+local function tryTurnRight()
+  while true do -- not sure how this can fail but might as well
+    if turtle.turnRight() then 
+      Direction = Direction + 1
+    end
+    if Direction > 3 then
+      Direction = Direction - 4
+    end
+    return 1
+    
   end
 end
 
-local function tryDown()
-  local failed = 0
-  while true do
-    if turtle.down() then
-      Z = Z - 1
-      return 1
-    end
-
-    if turtle.getFuelLevel() < 1 then
-      dynamicRefuel()
-    end
-
+local function face(direction)
+  while Direction ~= direction do
+    tryTurnRight()
   end
 end
 
@@ -128,6 +136,65 @@ local function tryForward()
     
     
   end
+end
+
+local function tryUp() -- needs error handling
+  while true do
+    if turtle.up() then
+      Z = Z + 1
+      return 1
+    end
+    turtle.digUp()
+    dynamicRefuel()
+  end
+end
+
+local function tryDown()
+  local failed = 0
+  while true do
+    if turtle.down() then
+      Z = Z - 1
+      return 1
+    end
+
+    if turtle.getFuelLevel() < 1 then
+      dynamicRefuel()
+    end
+
+  end
+end
+
+local function moveToOrigin()
+
+  if Y > 0 then -- turn to Y direction
+    while Direction ~= 2 do
+      tryTurnRight()
+    end  
+  elseif Y < 0 then
+    while Direction ~= 0 do
+      tryTurnRight()
+    end
+  end
+
+  while Y ~= 0 do -- move Y
+    tryForward()
+  end
+
+
+  if X > 0 then -- turn to X direction
+    while Direction ~= 3 do
+      tryTurnRight()
+    end
+  elseif X < 0 then
+    while Direction ~= 1 do
+      tryTurnRight()
+    end
+  end
+
+  while X ~= 0 do -- move X
+    tryForward()
+  end
+  
 end
 
 local function moveToLocation(x, y, z)
@@ -171,6 +238,19 @@ local function moveToLocation(x, y, z)
   end
 end
 
+local function lookNorth()
+  while Direction ~= 0 do
+    tryTurnRight()
+  end
+end
+
+local function turnAround()
+  tryTurnRight()
+  tryTurnRight()
+end
+
+-- build functions
+
 local function tryPlaceDown(item)
   
   while not selectItem(item) do
@@ -179,6 +259,88 @@ local function tryPlaceDown(item)
   end
 
   turtle.placeDown()
+
+end
+
+local function buildRect(width, length, item)
+  local tempWidth, tempLength = width - 1, length - 1
+  local tempIderator
+  local headAssFlag = 0
+
+  if width > length then
+    tempIderator = width
+  elseif width <= length then
+    tempIderator = width
+  end
+
+  for i = 1, tempIderator, 1 do
+
+    for i = 1, tempLength, 1 do
+      tryPlaceDown(item)
+      tryForward()
+    end
+    if headAssFlag == 1 then
+      tempLength = tempLength - 1
+    end
+    headAssFlag = 1
+
+    tryTurnRight()
+    
+    for i = 1, tempWidth, 1 do
+      placeDown(item)
+      tryForward()
+    end
+    tempWidth = tempWidth - 1
+
+    tryTurnRight()
+
+  end
+
+end
+
+-- dig functions
+
+local function tryDig()
+  if isInventoryFull() then
+    print("inventory full")
+  end
+
+  turtle.dig()
+end
+
+local function digRect(width, length)
+  local tempWidth, tempLength = width - 1, length - 1
+  local tempIderator
+  local headAssFlag = 0
+
+  if width > length then
+    tempIderator = width
+  elseif width <= length then
+    tempIderator = width
+  end
+
+  for i = 1, tempIderator, 1 do
+
+    for i = 1, tempLength, 1 do
+      tryDig()
+      tryForward()
+    end
+    if headAssFlag == 1 then
+      tempLength = tempLength - 1
+    end
+    headAssFlag = 1
+
+    tryTurnRight()
+    
+    for i = 1, tempWidth, 1 do
+      tryDig()
+      tryForward()
+    end
+    tempWidth = tempWidth - 1
+
+    tryTurnRight()
+
+  end
 
 end
 
@@ -196,6 +358,18 @@ local function cutTree() -- cut down tree that is in front of turt
 
   moveToLocation(X, Y, 0)
 end
+
+-- look at world
+
+local function getItemUnder() -- returns item under turtle
+  if turtle.inspectDown() ~= "nil" then
+    return string.sub(turtle.inspectDown()["name"], string.find(turtle.inspectDown()["name"], ":") + 1)
+  else
+    return ""
+  end
+end
+
+-- other worlds interactions
 
 local function bigSuck() -- no loads refused
   turtle.suck()
@@ -217,6 +391,14 @@ local function massiveSuck()
   face(currentDirection) -- should already face this way but might as well make sure
 
 end
+
+------------------- end of function block
+
+
+
+
+
+
 
 turtle.refuel()
 
@@ -257,7 +439,7 @@ while true do
 
   tryDown()
   face(2) -- face backwards
-  while howManyStacks("birch_log") > 1 do
+  while howManyStacks("birch_log") > 2 do -- one for comparing, one for fuel
     selectItem("birch_log")
     turtle.drop()
   end
