@@ -12,6 +12,20 @@ local function printTable(table)
   print(textutils.serialize(table))
 end
 
+local function longTimer(mins)
+  for i = 1, mins - 1, 1 do
+    sleep(60)
+    print(mins - i, " minutes remaining")
+  end
+
+  sleep(30)
+
+  print("0.5 minutes remaining")
+  sleep(20)
+  print("10 seconds remaining")
+
+end
+
 -- inventory functions
 
 local function getItemName(slot)
@@ -81,7 +95,7 @@ local function dynamicRefuel() -- refuel with priority
 
   for i = 1, #fuelItems, 1 do
     if selectItem(fuelItems[i]) > 0 then
-      turtle.refuel()
+      turtle.refuel(1)
       print("refueled using ", fuelItems[i])
       return 1
     end
@@ -439,11 +453,11 @@ local function massiveSuck()
 
 end
 
----------------- end of function block
+-- farm functions
 
 local function plantGrowth() -- returns growth value
   local shitter, pisser = turtle.inspectDown()
-
+  
   if shitter then
     return pisser["state"]["age"]
   end
@@ -451,20 +465,26 @@ local function plantGrowth() -- returns growth value
 end
 
 local function harvestSingle()
+  selectItem("wheat_seeds")
   turtle.digDown()
   tryPlaceDown("wheat_seeds")
 end
 
 local function harvest(x, y)
   local cuck = 0
-
+  
   tryForward() -- get off the chest
   while cuck < x do
-
+    
     for i = 1, y, 1 do
       
       if i > 1 then
         tryForward()
+      end
+
+      if plantGrowth() < 7 or plantGrowth() > 5 then
+        selectItem("bone_meal")
+        turtle.placeDown()
       end
       
       if plantGrowth() == 7 then
@@ -486,31 +506,43 @@ local function harvest(x, y)
   end
 end
 
-local function longTimer(mins)
-  for i = 1, mins - 1, 1 do
-    sleep(60)
-    print(mins - i, " minutes remaining")
+local function compost()
+  face(3)
+
+  moveToLocation(-1, 0 , 1)
+
+  while howManyStacks("wheat_seeds") > 2 do
+    selectItem("wheat_seeds")
+    turtle.dropDown()
   end
-
-  sleep(30)
-
-  print("0.5 minutes remaining")
-  sleep(20)
-  print("10 seconds remaining")
-
 end
+
+---------------- end of function block
+
 
 
 while true do
   harvest(10,13)
   
+  -- moveToLocation(0,0,0)
+
+  compost()
+
+  face(1)
+  tryForward()
+
+  moveToLocation(1,0,0) -- dump wheat
+  while selectItem("wheat") > 0 do
+    turtle.dropDown()
+  end
+
+  selectItem("bone_meal")
+  moveToLocation(0,0,0) -- pickup bone meal
+  turtle.suckDown()
+  
   moveToLocation(0,0,0)
   face(0)
 
-  if selectItem("wheat") then -- put crop into chest
-    turtle.dropDown()
-  end
-  
   longTimer(30)
 end
 
