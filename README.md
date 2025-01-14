@@ -19,7 +19,7 @@ Farms wheat. Try to keep the width of the farm an even number to keep efficiency
 THIS THING IS EXTREMELY LOUD!!!!<br/>
 Will produce cobblestone faster than you can use it. At one point I had 2 turtles building, and I was building myself. Only then was I able to make a dent in the double chest that this thing feeds into
 
-### Images to come on 2025/01/14
+![Cobblestone generator turtle](/MEDIA/Cobblestone.png "cobblestone generator configuration")
 
 ## General
 
